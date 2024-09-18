@@ -1,4 +1,7 @@
-﻿# Visual Studio 2015 user specific files
+﻿#rider specific files
+.idea/*
+
+# Visual Studio 2015 user specific files
 .vs/
 
 # Mac Artifacts
@@ -48,10 +51,6 @@
 *.sdf
 *.VC.db
 *.VC.opendb
-
-# Precompiled Assets
-SourceArt/**/*.png
-SourceArt/**/*.tga
 
 # Binary Files
 Binaries/*
