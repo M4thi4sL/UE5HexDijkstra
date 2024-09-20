@@ -1,10 +1,9 @@
-// Salvatore Spoto 2020
 
 using UnrealBuildTool;
 
-public class MyProject3 : ModuleRules
+public class Dijkstra : ModuleRules
 {
-	public MyProject3(ReadOnlyTargetRules Target) : base(Target)
+	public Dijkstra(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
