@@ -2,6 +2,16 @@
 
 This project is a complete refactor of the [original DijkstraBlueprint repository](https://github.com/salvatorespoto/DijkstraBlueprint), updated to follow industry-standard coding practices and optimization.
 
+# Branches
+
+✅ [Dijkstra_blueprint](https://github.com/M4thi4sL/UE5HexDijkstra/tree/Dijkstra_Blueprint) contains the latest version of the blueprint only implementation.
+
+🚧 [Dijkstra_C++](https://github.com/M4thi4sL/UE5HexDijkstra/tree/Dijkstra_C%2B%2B) contains the latest version of the C++ / Blueprint implementation. 
+
+You can also find a zipped up version of either project in the release section.
+
+🚧 TODO: add speed comparison
+
 # Features
 
 ### BP_GridManager
