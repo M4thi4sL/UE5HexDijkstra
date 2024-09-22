@@ -1,3 +1,4 @@
+// Salvatore Spoto 2020
 
 using UnrealBuildTool;
 
