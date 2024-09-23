@@ -3,6 +3,8 @@
 *.umap filter=lfs diff=lfs merge=lfs -text
 
 *.cs linguist-detectable=false
+*.cpp linguist-detectable=true
+*.h linguist-detectable=true
 
 
 # Raw Content types
