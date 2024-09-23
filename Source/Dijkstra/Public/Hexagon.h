@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "PDA_Hex.h"
+#include "EHexState.h"
 #include "Hexagon.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHexClickedDelegate, FIntVector, HexPosition);
@@ -22,16 +23,50 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+private:
+	UFUNCTION(BlueprintCallable, Category = "Hexagon")
+	void SetNewMaterial(UMaterialInstance* NewMaterial);
+
+	//Setup the hex tile, read all the required info from the Data-asset and respond accordingly
+	UFUNCTION(BlueprintCallable, Category= "Hexagon")
+	void SetupHex();
+	
 public:
+	// Static Mesh component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* StaticMeshComponent;
+
+	// Event handling functions
+	UFUNCTION()
+	void OnMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
+
+	UFUNCTION()
+	void OnMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent);
+
+	UFUNCTION()
+	void OnMeshEndCursorOver(UPrimitiveComponent* TouchedComponent);
+	
 	//DataAsset
-	UPROPERTY(BlueprintReadWrite, Category= "Hexagon")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hexagon", meta = (ExposeOnSpawn = true))
 	UPDA_Hex* HexDataAsset;
 	
+	// HexState
+	UPROPERTY(BlueprintReadWrite, Category = "Hexagon")
+	EHexState CurrentState = EHexState::Normal;
+
 	// Event dispatcher for hexagon clicks
 	UPROPERTY(BlueprintCallable, BlueprintAssignable, Category = "Hexagon")
 	FHexClickedDelegate HexClicked;
 
+	// cubic coordinate of the hex tile in the grid
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hexagon", meta = (ExposeOnSpawn = true))
+	FIntVector HexPosition;
+	
 	// Function to call when the hexagon is clicked
 	UFUNCTION(BlueprintCallable, Category = "Hexagon")
-	void OnHexClicked(FIntVector HexPosition);
+	void OnHexClicked(FIntVector CurrentHexPosition);
+
+	// Update the current HexState value
+	UFUNCTION(BlueprintCallable, Category = "Hexagon")
+	void SetHexState(EHexState NewHexState);
 };

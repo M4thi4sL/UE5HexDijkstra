@@ -1,0 +1,25 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=C3F5286BA514457D555D05D714C839BD/Position/@EntryValue">26</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=33A5B83F4E2D8BD4E3FF6FB3F82C3310/Position/@EntryValue">3</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=CD6CC7596E3E79334480EE35B1467D2C/Position/@EntryValue">4</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=AC25A3DCD3D1F7FC88EFFBB0973A00DB/Position/@EntryValue">5</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=A68CC5E9FE7E541755A2CB1AFA4AECBF/Position/@EntryValue">6</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=BE3093BD07633BEFC746686F83AA9461/Position/@EntryValue">7</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=CBFCA5F01F20AD427EFA9A0AFED3108B/Position/@EntryValue">8</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=480D01A19D9DE2C3F8196790BCE3E18A/Position/@EntryValue">9</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=B3AD01D9E66B5D8E9584525E090ECEED/Position/@EntryValue">10</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=60712B94EEC921C723A8A85D675CF670/Position/@EntryValue">11</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=4C7325C8DFB2E6EBD5842BF217833F53/Position/@EntryValue">12</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=B9DA09D841736BD60F02341C1B14756C/Position/@EntryValue">13</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=A1E462C98D63BD9D31387C9A24F1AADD/Position/@EntryValue">14</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=DD227847ED266B60BD2869D136FC683F/Position/@EntryValue">15</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=433027911D0FE7B9560AD6D429151666/Position/@EntryValue">16</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=CFA1AA122F79A1BE65C1220D413D0BA4/Position/@EntryValue">17</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=EB38AAC4B9D288ED6396FA985C041CC4/Position/@EntryValue">18</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=6368742DD25C737FF89B5382784B6FC8/Position/@EntryValue">19</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=1C05992B6C83E471E795A410B8E60D6C/Position/@EntryValue">20</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=1E6B43E4820F031C300B23F6A267C88D/Position/@EntryValue">21</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=6B72A109214B4C0695595CBE483F34D4/Position/@EntryValue">22</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=ADB98212EDF3FF4717288E6048F8FDC0/Position/@EntryValue">23</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=7CBA9F4399CABBC9049E84D28D477F1A/Position/@EntryValue">24</s:Int64>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/QuickList/=110D269615DF63418F56E2D31C65B068/Entry/=2BDC3D22F2AA233B936175530B4E461D/Position/@EntryValue">25</s:Int64></wpf:ResourceDictionary>

@@ -6,7 +6,7 @@
 #include "EHexType.generated.h"
 
 /**
- * 
+ * Defines the pathing state of the hex. Does this hex allow walking or does it block?
  */
 UENUM(BlueprintType) 
 enum class EHexType  : uint8
