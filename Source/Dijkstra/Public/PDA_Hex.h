@@ -30,7 +30,7 @@ public:
 	TSoftObjectPtr<UMaterialInstance> HoverMaterial;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup")
-	EHexType HexType; // Declare the enum variable
+	EHexType HexType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Setup")
 	int TravelCost = 1;

@@ -7,11 +7,11 @@ TArray<TSoftObjectPtr<UObject>> UPDA_Hex::GetSoftReferences()
 {
 	TArray<TSoftObjectPtr<UObject>> SoftReferences;
 
-	// Add each soft reference to the array
-	if (Mesh.IsValid()) SoftReferences.Add(Mesh);
-	if (BaseMaterial.IsValid()) SoftReferences.Add(BaseMaterial);
-	if (SelectionMaterial.IsValid()) SoftReferences.Add(SelectionMaterial);
-	if (HoverMaterial.IsValid()) SoftReferences.Add(HoverMaterial);
-	
+	// Add each soft reference to the array only if it is NOT null (i.e., assigned)
+	if (!Mesh.IsNull()) SoftReferences.Add(Mesh);
+	if (!BaseMaterial.IsNull()) SoftReferences.Add(BaseMaterial);
+	if (!SelectionMaterial.IsNull()) SoftReferences.Add(SelectionMaterial);
+	if (!HoverMaterial.IsNull()) SoftReferences.Add(HoverMaterial);
+    
 	return SoftReferences;
 }
