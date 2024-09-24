@@ -28,10 +28,6 @@ Primarily serves as the visual representation of hexagons in the grid. All logic
 
 ### PDA_Base
 
-The base class for all future data assets. It contains a single function that returns all soft references that need to be loaded. This function is intended to be overridden by child classes if needed.
-
-![softreferences](https://github.com/user-attachments/assets/19154116-e999-4a31-bd06-ea2cfa3594e0)
-
 ### PDA_Hexagon
 
 Inherits from PDA_Base. It defines the hexagon's mesh, materials, and travel cost. It overrides the GetSoftReferences function to return all necessary soft references for asset initialization.
