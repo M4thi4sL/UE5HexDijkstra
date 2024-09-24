@@ -5,20 +5,25 @@
 #include "Async/Async.h"
 
 
-// Sets default values (constructor)
+// Sets default values
 AHexagon::AHexagon()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	RootComponent = StaticMeshComponent;
 
 	StaticMeshComponent->OnClicked.AddDynamic(this, &AHexagon::OnMeshClicked);
 	StaticMeshComponent->OnBeginCursorOver.AddDynamic(this, &AHexagon::OnMeshBeginCursorOver);
 	StaticMeshComponent->OnEndCursorOver.AddDynamic(this, &AHexagon::OnMeshEndCursorOver);
+}
 
+void AHexagon::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
 	SetupHex();
 }
+
 
 // Called when the game starts or when spawned
 void AHexagon::BeginPlay()
@@ -60,7 +65,15 @@ void AHexagon::SetupHex()
 
 void AHexagon::OnMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
-	HexClicked.Broadcast(HexPosition);
+	switch (HexDataAsset->HexType)
+	{
+	case EHexType::Walkable:
+		HexClicked.Broadcast(HexPosition);
+		break;
+	default:
+		break;
+	}
+	
 }
 
 void AHexagon::OnHexClicked(FIntVector CurrentHexPosition)
@@ -70,60 +83,65 @@ void AHexagon::OnHexClicked(FIntVector CurrentHexPosition)
 
 void AHexagon::OnMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent)
 {
-	UMaterialInstance* Material;
-
-	Material = HexDataAsset->HoverMaterial.LoadSynchronous();
-	SetNewMaterial(Material);
-	//switch(CurrentState)
-	//{
-	//case  EHexState::Normal:
-//		switch(HexDataAsset->HexType)
-//		{
-//		case EHexType::Walkable:
-//			SetHexState(EHexState::Hovered);
-//		default:
-//			break;
-//		}
-//	default:
-//		break;
-//	}
+	switch(CurrentState)
+	{
+		case  EHexState::Normal:
+		switch(HexDataAsset->HexType)
+		{
+		case EHexType::Walkable:
+			SetHexState(EHexState::Hovered);
+			break;
+		default:
+			break;
+		}
+	default:
+		break;
+	}
 }
 
 void AHexagon::OnMeshEndCursorOver(UPrimitiveComponent* TouchedComponent)
 {
-	UMaterialInstance* Material;
-
-	Material = HexDataAsset->BaseMaterial.LoadSynchronous();
-	SetNewMaterial(Material);
-//	switch(CurrentState)
-//	{
-//	case  EHexState::Hovered:
-//		SetHexState(EHexState::Normal);
-//	case  EHexState::Selected:
-//		SetHexState(EHexState::Normal);
-//	default:
-//		break;
-//	}
+	switch(CurrentState)
+	{
+	case  EHexState::Hovered:
+		SetHexState(EHexState::Normal);
+		break;
+	default:
+		break;
+	}
 }
 
-
-void AHexagon::SetHexState(EHexState NewHexState)
+void AHexagon::SetHexState(const EHexState NewHexState)
 {
-	// Update the CurrentState to the new state
+	//check if the NewHexState is different from our CurrentState as there is no point in updating to the same value.
+	if (CurrentState == NewHexState)
+	{
+		return;
+	}
+	
+	// save the previous state and Update the CurrentState to the new state
+	EHexState PreviousHexState = CurrentState;
 	CurrentState = NewHexState;
-	UMaterialInstance* Material;
+	UMaterialInstance* Material = nullptr;
 	
 	switch (NewHexState)
 	{
 	case EHexState::Normal:
 		Material = HexDataAsset->BaseMaterial.LoadSynchronous();
 		SetNewMaterial(Material);
+		break;
 	case EHexState::Hovered:
 		Material = HexDataAsset->HoverMaterial.LoadSynchronous();
 		SetNewMaterial(Material);
+		break;
 	case EHexState::Selected:
 		Material = HexDataAsset->SelectionMaterial.LoadSynchronous();
 		SetNewMaterial(Material);
+		break;
+	case EHexState::Special:
+		Material = HexDataAsset->HoverMaterial.LoadSynchronous();
+		SetNewMaterial(Material);
+		break;
 	default:
 			break;
 	}

@@ -13,5 +13,6 @@ enum class EHexState  : uint8
 {
 	Normal UMETA(DisplayName = "Normal"),
 	Hovered UMETA(DisplayName = "Hovered"),
-	Selected UMETA(Displayname = "Selected")
+	Selected UMETA(Displayname = "Selected"),
+	Special UMETA(Displayname = "Special"),
 };

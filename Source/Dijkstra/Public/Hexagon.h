@@ -30,7 +30,10 @@ private:
 	//Setup the hex tile, read all the required info from the Data-asset and respond accordingly
 	UFUNCTION(BlueprintCallable, Category= "Hexagon")
 	void SetupHex();
-	
+
+	// Function to call when the hexagon is clicked
+	UFUNCTION(BlueprintCallable, Category = "Hexagon")
+	void OnHexClicked(FIntVector CurrentHexPosition);
 public:
 	// Static Mesh component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -45,6 +48,9 @@ public:
 
 	UFUNCTION()
 	void OnMeshEndCursorOver(UPrimitiveComponent* TouchedComponent);
+
+	UFUNCTION()
+	void OnConstruction(const FTransform& Transform) override;
 	
 	//DataAsset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hexagon", meta = (ExposeOnSpawn = true))
@@ -61,12 +67,8 @@ public:
 	// cubic coordinate of the hex tile in the grid
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hexagon", meta = (ExposeOnSpawn = true))
 	FIntVector HexPosition;
-	
-	// Function to call when the hexagon is clicked
-	UFUNCTION(BlueprintCallable, Category = "Hexagon")
-	void OnHexClicked(FIntVector CurrentHexPosition);
 
 	// Update the current HexState value
 	UFUNCTION(BlueprintCallable, Category = "Hexagon")
-	void SetHexState(EHexState NewHexState);
+	void SetHexState(const EHexState NewHexState);
 };
