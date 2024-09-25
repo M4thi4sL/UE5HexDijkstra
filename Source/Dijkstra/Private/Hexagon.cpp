@@ -89,11 +89,6 @@ void AHexagon::OnMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonP
 	
 }
 
-void AHexagon::OnHexClicked(FIntVector CurrentHexPosition)
-{
-	HexClicked.Broadcast(HexPosition);
-}
-
 void AHexagon::OnMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent)
 {
 	switch(CurrentState)
