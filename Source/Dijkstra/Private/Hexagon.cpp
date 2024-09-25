@@ -3,6 +3,7 @@
 
 #include "Hexagon.h"
 #include "Async/Async.h"
+#include "Engine/AssetManager.h"
 
 
 // Sets default values
@@ -47,19 +48,31 @@ void AHexagon::SetupHex()
 	{
 		// Get the array of soft references
 		TArray<TSoftObjectPtr<UObject>> SoftReferences = HexDataAsset->GetSoftReferences();
+		TArray<FSoftObjectPath> SoftObjectPaths;
 
-		// Load each soft reference asynchronously
+		// Convert the TSoftObjectPtr references to FSoftObjectPath
 		for (const TSoftObjectPtr<UObject>& SoftRef : SoftReferences)
 		{
-			// Check if the reference is valid before trying to load
 			if (SoftRef.IsValid())
 			{
-				// Load the asset synchronously
-				UObject* LoadedAsset = SoftRef.LoadSynchronous();
+				SoftObjectPaths.Add(SoftRef.ToSoftObjectPath());
 			}
 		}
-		StaticMeshComponent->SetStaticMesh(HexDataAsset->Mesh.Get());
-		StaticMeshComponent->SetMaterial(0, HexDataAsset->BaseMaterial.Get());
+
+		// Now request the async load for all the soft object paths
+		if (SoftObjectPaths.Num() > 0)
+		{
+			UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftObjectPaths,FStreamableDelegate::CreateLambda([this]()\
+				{
+					// This code will run once all assets are loaded
+					UE_LOG(LogTemp, Log, TEXT("All assets have been loaded"));
+
+					// Set static mesh and material (assuming they're now available)
+					if (HexDataAsset->Mesh.IsValid())StaticMeshComponent->SetStaticMesh(HexDataAsset->Mesh.Get());
+					if (HexDataAsset->BaseMaterial.IsValid())StaticMeshComponent->SetMaterial(0, HexDataAsset->BaseMaterial.Get());
+				})
+			);
+		}
 	}
 }
 
@@ -113,36 +126,63 @@ void AHexagon::OnMeshEndCursorOver(UPrimitiveComponent* TouchedComponent)
 
 void AHexagon::SetHexState(const EHexState NewHexState)
 {
-	//check if the NewHexState is different from our CurrentState as there is no point in updating to the same value.
+	// Check if the NewHexState is different from our CurrentState
 	if (CurrentState == NewHexState)
 	{
 		return;
 	}
 	
-	// save the previous state and Update the CurrentState to the new state
+	// Save the previous state and update the CurrentState
 	EHexState PreviousHexState = CurrentState;
 	CurrentState = NewHexState;
-	UMaterialInstance* Material = nullptr;
-	
+
 	switch (NewHexState)
 	{
-	case EHexState::Normal:
-		Material = HexDataAsset->BaseMaterial.LoadSynchronous();
-		SetNewMaterial(Material);
-		break;
-	case EHexState::Hovered:
-		Material = HexDataAsset->HoverMaterial.LoadSynchronous();
-		SetNewMaterial(Material);
-		break;
-	case EHexState::Selected:
-		Material = HexDataAsset->SelectionMaterial.LoadSynchronous();
-		SetNewMaterial(Material);
-		break;
-	case EHexState::Special:
-		Material = HexDataAsset->HoverMaterial.LoadSynchronous();
-		SetNewMaterial(Material);
-		break;
-	default:
+		case EHexState::Normal:
+			UAssetManager::GetStreamableManager().RequestAsyncLoad(
+				HexDataAsset->BaseMaterial.ToSoftObjectPath(), 
+				FStreamableDelegate::CreateLambda([this]()
+				{
+					// Ensure asset is loaded before setting material
+					if (HexDataAsset->BaseMaterial.IsValid()) SetNewMaterial(HexDataAsset->BaseMaterial.Get());
+				})
+			);
+			break;	
+
+		case EHexState::Hovered:
+			UAssetManager::GetStreamableManager().RequestAsyncLoad(
+				HexDataAsset->HoverMaterial.ToSoftObjectPath(), 
+				FStreamableDelegate::CreateLambda([this]()
+				{
+					// Ensure asset is loaded before setting material
+					if (HexDataAsset->HoverMaterial.IsValid())SetNewMaterial(HexDataAsset->HoverMaterial.Get());
+				})
+			);
+			break;	
+
+		case EHexState::Selected:
+			UAssetManager::GetStreamableManager().RequestAsyncLoad(
+				HexDataAsset->SelectionMaterial.ToSoftObjectPath(), 
+				FStreamableDelegate::CreateLambda([this]()
+				{
+					// Ensure asset is loaded before setting material
+					if (HexDataAsset->SelectionMaterial.IsValid())SetNewMaterial(HexDataAsset->SelectionMaterial.Get());
+				})
+			);
+			break;	
+
+		case EHexState::Special:
+			UAssetManager::GetStreamableManager().RequestAsyncLoad(
+				HexDataAsset->HoverMaterial.ToSoftObjectPath(), 
+				FStreamableDelegate::CreateLambda([this]()
+				{
+					// Ensure asset is loaded before setting material
+					if (HexDataAsset->HoverMaterial.IsValid()) SetNewMaterial(HexDataAsset->HoverMaterial.Get());
+				})
+			);
+			break;	
+
+		default:
 			break;
 	}
 }
