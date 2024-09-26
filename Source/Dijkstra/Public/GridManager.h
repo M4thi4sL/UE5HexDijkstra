@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Hexagon.h"
 #include "GameFramework/Actor.h"
+#include "Hexagon.h"
+#include "PDA_Hex.h"
 #include "GridManager.generated.h"
 
 UCLASS()
@@ -16,34 +17,36 @@ public:
 	// Sets default values for this actor's properties
 	AGridManager();
 	
-	UFUNCTION(BlueprintCallable, Category="Grid|Setup")
+	UFUNCTION(BlueprintCallable, Category="Grid | Setup", CallInEditor)
 	void GenerateMap();
-
+	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 private:
 
 	//Grid generation
 
 	//Clear an existing grid.
-	UFUNCTION(BlueprintCallable, Category="Grid|Setup")
+	UFUNCTION(BlueprintCallable, Category="Grid | Setup")
 	void ClearGrid();
 
 	//Generate a new grid.
-	UFUNCTION(BlueprintCallable, Category="Grid|Setup")
+	UFUNCTION(BlueprintCallable, Category="Grid | Setup")
 	void GenerateGrid();
 
 	//Set a hex in the grid as the goal.
-	UFUNCTION(BlueprintCallable, Category="Grid|Setup")
+	UFUNCTION(BlueprintCallable, Category="Grid | Setup")
 	void SetGoal();
 
 	//Hex specific functions
 
 	//Convert Oddq to Cuve Coords.
-	UFUNCTION(BlueprintPure, Category="Grid|Conversion")
-	FIntVector OddqToCubeCoordinates(int OddqRow, int OddqColumn);
+	UFUNCTION(BlueprintPure, Category="Grid | Conversion")
+	static FIntVector OddqToCubeCoordinates(int OddqRow, int OddqColumn);
 
 	//Calculate the tile coords based on its position
-	UFUNCTION(BlueprintPure, Category="Hexgrid|Calculation")
-	void CalculateHexPositions(UPARAM() float HexPositionX, UPARAM() float HexPositionY, UPARAM() float HexRadius, 
+	UFUNCTION(BlueprintPure, Category="Hexgrid | Calculation")
+	static void CalculateHexPositions(UPARAM() float HexPositionX, UPARAM() float HexPositionY, UPARAM() float HexRadius, 
 							   float& XRow, float& YRow, float& XRowShifted, bool& YRowShifted);
 
 	UFUNCTION(Category="Grid")
@@ -54,26 +57,30 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	// Add a scene component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USceneComponent* RootSceneComponent;
 	
 	// The width of the hex grid
-	UPROPERTY(BlueprintReadWrite, Category="Grid|Setup")
+	UPROPERTY(EditAnywhere, Category="Grid | Setup")
 	int Width = 8;
 
 	//The height of the hex grid
-	UPROPERTY(BlueprintReadWrite, Category="Grid|Setup")
+	UPROPERTY(EditAnywhere, Category="Grid | Setup")
 	int Height = 8;
 
 	//The spacing in between two different Hexes.
 	//We already account for the individual size of the Hex so this is purely for the space between two hexes.
-	UPROPERTY(BlueprintReadWrite, Category="Grid|Setup")
+	UPROPERTY(EditAnywhere, Category="Grid | Setup")
 	float Distance = 2;
 
 	//Tile we want to spawn.
-	UPROPERTY(EditAnywhere, Category = "Spawning")
+	UPROPERTY(EditAnywhere, Category = "Grid | Setup")
 	TSubclassOf<AHexagon> HexagonToSpawn;
 
+	UPROPERTY(EditAnywhere, Category = "Grid | Setup")
+	TArray<TSoftObjectPtr<UPDA_Hex>> HexPool;
+	
 private:
 	//Map containing all the Hexes in the grid
 	UPROPERTY()
