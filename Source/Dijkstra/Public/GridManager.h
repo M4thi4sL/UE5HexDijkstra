@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Hexagon.h"
 #include "PDA_Hex.h"
+#include "StartPoint.h"
 #include "GridManager.generated.h"
 
 UCLASS()
@@ -49,6 +50,11 @@ private:
 	static void CalculateHexPositions(UPARAM() float HexPositionX, UPARAM() float HexPositionY, UPARAM() float HexRadius, 
 							   float& XRow, float& YRow, float& XRowShifted, bool& YRowShifted);
 
+
+	//Is the tile at the given position considered an obstacle?
+	UFUNCTION(Category="Grid | Helpers")
+	bool IsObstacle(UPARAM() const FIntVector Position);
+	
 	UFUNCTION(Category="Grid")
 	void OnTileClicked(const FIntVector HexPosition);
 	
@@ -78,9 +84,14 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Grid | Setup")
 	TSubclassOf<AHexagon> HexagonToSpawn;
 
+	//Start point class
+	UPROPERTY(EditAnywhere, Category = "Grid | Setup")
+	TSubclassOf<AStartPoint> StartPoint;
+
+	//Map containing all the coordinates and tiles in the grid.
 	UPROPERTY(EditAnywhere, Category = "Grid | Setup")
 	TArray<TSoftObjectPtr<UPDA_Hex>> HexPool;
-	
+
 private:
 	//Map containing all the Hexes in the grid
 	UPROPERTY()

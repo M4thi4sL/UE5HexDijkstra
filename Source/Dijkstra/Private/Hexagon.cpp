@@ -64,9 +64,7 @@ void AHexagon::SetupHex()
 		{
 			UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftObjectPaths,FStreamableDelegate::CreateLambda([this]()\
 				{
-					// This code will run once all assets are loaded
-					UE_LOG(LogTemp, Log, TEXT("All assets have been loaded"));
-
+					//UE_LOG(LogTemp, Log, TEXT("All assets have been loaded"));
 					// Set static mesh and material (assuming they're now available)
 					if (HexDataAsset->Mesh.IsValid())StaticMeshComponent->SetStaticMesh(HexDataAsset->Mesh.Get());
 					if (HexDataAsset->BaseMaterial.IsValid())StaticMeshComponent->SetMaterial(0, HexDataAsset->BaseMaterial.Get());
