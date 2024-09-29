@@ -26,19 +26,23 @@ void AGridManager::GenerateMap()
 
 void AGridManager::ClearGrid()
 {
-	// Combine existing hexes and startpoints
-	TArray<AActor*> ActorsToClear;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHexagon::StaticClass(), ActorsToClear);
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStartPoint::StaticClass(), ActorsToClear);
+	// Use a TSet to ensure unique actors
+	TSet<AActor*> ActorsToClear;
 
-	// Safely destroy all actors in one go
+	// Get all Hexagon actors and add them to the set
+	TArray<AActor*> Hexagons;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHexagon::StaticClass(), Hexagons);
+	ActorsToClear.Append(Hexagons);
+
+	// Get all StartPoint actors and add them to the set
+	TArray<AActor*> StartPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStartPoint::StaticClass(), StartPoints);
+	ActorsToClear.Append(StartPoints);
+
+	// Safely destroy all unique actors
 	for (AActor* Actor : ActorsToClear)
 	{
-		if (Actor)
-		{
-			// Mark for safe deletion
-			Actor->Destroy();
-		}
+		Actor->Destroy();
 	}
 
 	// Clear the Hexcell Map
@@ -417,8 +421,12 @@ void AGridManager::SetNeighbourHexHighlighted(const FIntVector& SelectedHex)
 void AGridManager::OnTileClicked(const FIntVector HexPosition)
 {
 	UE_LOG(LogTemp, Log, TEXT("Hex clicked at: %s"), *HexPosition.ToString());
+
+	//Debug draws the neighbouring hexes 
+	// SetNeighbourHexHighlighted(HexPosition);
+
+	// Find the path, then draw the path we found.
 	bool PathFound;
-	
 	const TMap<FIntVector,FIntVector> PathToTake = FindPath(HexPosition, PathFound);
 	if (PathFound)
 	{
