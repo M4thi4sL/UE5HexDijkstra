@@ -26,25 +26,22 @@ void AGridManager::GenerateMap()
 
 void AGridManager::ClearGrid()
 {
-	//Find existing hexes and destroy them
-	TArray<AActor*> HexActors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHexagon::StaticClass(), HexActors);
+	// Combine existing hexes and startpoints
+	TArray<AActor*> ActorsToClear;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHexagon::StaticClass(), ActorsToClear);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStartPoint::StaticClass(), ActorsToClear);
 
-    for (AActor* Hex : HexActors)
-    {
-	    Hex->Destroy();
-    }
-
-	//find existing startpoints and destroy them
-	TArray<AActor*> StartPoints;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStartPoint::StaticClass(), StartPoints);
-
-	for (AActor* Point : StartPoints)
+	// Safely destroy all actors in one go
+	for (AActor* Actor : ActorsToClear)
 	{
-		Point->Destroy();
+		if (Actor)
+		{
+			// Mark for safe deletion
+			Actor->Destroy();
+		}
 	}
 
-	//Clear the Hexcell Map
+	// Clear the Hexcell Map
 	HexCells.Empty();
 }
 
