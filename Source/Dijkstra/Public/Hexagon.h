@@ -31,9 +31,7 @@ private:
 	UFUNCTION(BlueprintCallable, Category= "Hexagon")
 	void SetupHex();
 
-	// Function to call when the hexagon is clicked
-	UFUNCTION(BlueprintCallable, Category = "Hexagon")
-	void OnHexClicked(FIntVector CurrentHexPosition);
+	
 public:
 	// Static Mesh component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
