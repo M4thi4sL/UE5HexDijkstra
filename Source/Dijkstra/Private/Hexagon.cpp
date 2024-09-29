@@ -53,7 +53,8 @@ void AHexagon::SetupHex()
 		// Convert the TSoftObjectPtr references to FSoftObjectPath
 		for (const TSoftObjectPtr<UObject>& SoftRef : SoftReferences)
 		{
-			if (SoftRef.IsValid())
+			// Consider adding references that are not currently valid but could be loaded
+			if (!SoftRef.IsNull()) 
 			{
 				SoftObjectPaths.Add(SoftRef.ToSoftObjectPath());
 			}
@@ -62,17 +63,16 @@ void AHexagon::SetupHex()
 		// Now request the async load for all the soft object paths
 		if (SoftObjectPaths.Num() > 0)
 		{
-			UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftObjectPaths,FStreamableDelegate::CreateLambda([this]()\
-				{
-					//UE_LOG(LogTemp, Log, TEXT("All assets have been loaded"));
-					// Set static mesh and material (assuming they're now available)
-					if (HexDataAsset->Mesh.IsValid())StaticMeshComponent->SetStaticMesh(HexDataAsset->Mesh.Get());
-					if (HexDataAsset->BaseMaterial.IsValid())StaticMeshComponent->SetMaterial(0, HexDataAsset->BaseMaterial.Get());
-				})
-			);
+			TSharedPtr<FStreamableHandle> Handle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftObjectPaths, FStreamableDelegate::CreateLambda([this]()
+			{
+				// Set static mesh and material (assuming they're now available)
+				if (HexDataAsset->Mesh.IsValid()) StaticMeshComponent->SetStaticMesh(HexDataAsset->Mesh.Get());
+				if (HexDataAsset->BaseMaterial.IsValid())  StaticMeshComponent->SetMaterial(0, HexDataAsset->BaseMaterial.Get());
+			}));
 		}
 	}
 }
+
 
 void AHexagon::OnMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {

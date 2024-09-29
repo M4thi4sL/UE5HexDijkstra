@@ -2,12 +2,9 @@
 
 
 #include "GridManager.h"
-
-#include "AsyncTreeDifferences.h"
 #include "StartPoint.h"
 #include "Kismet/GameplayStatics.h"
 #include "Hexagon.h"
-#include "Engine/AssetManager.h"
 #include "Algo/RandomShuffle.h"
 
 // Sets default values
@@ -65,7 +62,7 @@ void AGridManager::GenerateGrid()
             // Calculate hex positions
             CalculateHexPositions(Column, Row, HexRadius, XRow, YRow, XRowShifted, YRowShifted);
 
-            FVector Location = YRowShifted ? FVector(XRow, YRow, 0.0f) : FVector(XRow, XRowShifted, 0.0f);
+            FVector Location = YRowShifted ? FVector(XRow, XRowShifted, 0.0f) : FVector(XRow,YRow , 0.0f);
 
             // Setup spawn parameters
             FActorSpawnParameters SpawnParams;
@@ -79,7 +76,7 @@ void AGridManager::GenerateGrid()
                 Hex->HexPosition = CubeCoord;
 
                 // Get a random hex asset
-                int32 RandomIndex = FMath::RandRange(0, HexPool.Num() - 1);
+                int RandomIndex = FMath::RandRange(0, HexPool.Num() - 1);
                 TSoftObjectPtr<UPDA_Hex> RandomHexPtr = HexPool[RandomIndex];
 
                 // Load the asset synchronously (blocking)
@@ -104,7 +101,10 @@ void AGridManager::GenerateGrid()
                 Hex->HexClicked.AddDynamic(this, &AGridManager::OnTileClicked);
 
                 // Debug log
+            	#if WITH_EDITOR
                 UE_LOG(LogTemp, Log, TEXT("Hex added to HexCells at %s, Hex Label: %s"), *CubeCoord.ToString(), *Hex->GetActorLabel());
+				#endif
+            	
             }
         }
     }
@@ -137,6 +137,8 @@ void AGridManager::SetGoal()
 			{
 				AHexagon* Hexagon = *HexagonPtr;
 
+				Hexagon->SetHexState(EHexState::Special);
+
 				// Get the world location of the hexagon actor
 				const FVector SpawnLocation(0,0,0);
 				const FRotator SpawnRotation = FRotator::ZeroRotator;
@@ -157,30 +159,199 @@ void AGridManager::SetGoal()
 
 FIntVector AGridManager::OddqToCubeCoordinates(int OddqRow, int OddqColumn)
 {
-	int z = OddqRow - (OddqColumn - (OddqColumn & 1)) / 2;
-	int x  = OddqColumn;
-	int y = -OddqColumn - z;
-	
-	return FIntVector(x,y,z);
+	int x = OddqColumn;
+	int z = OddqRow - (OddqColumn - (OddqColumn & 1)) / 2; // Calculate Z based on column offset
+	int y = -x - z; // Ensure Q + R + S = 0
+	return FIntVector(x, y, z);
 }
 
-void AGridManager::CalculateHexPositions(float HexPositionX, float HexPositionY, float HexRadius, 
+void AGridManager::CalculateHexPositions(const int Column,const int Row, const float HexRadius, 
 										 float& XRow, float& YRow, float& XRowShifted, bool& YRowShifted)
 {
-	// The square root of 3, used for height calculations in hex grids
 	const float sqrt3 = FMath::Sqrt(3.0f);
-
-	// Calculate X position for the row
-	XRow = (HexRadius * (3.0f / 2.0f)) * HexPositionX;
-
-	// Calculate Y position (taking height into account and row shifting for odd columns)
-	YRow = HexRadius * sqrt3 * HexPositionY;
-
+	YRow = HexRadius * sqrt3 * Row;
+	XRow = (HexRadius * (3.0f / 2.0f)) * Column;
 	// Check if the current row should be shifted (odd row check)
-	YRowShifted = static_cast<int>(HexPositionX) % 2 == 1;
+	YRowShifted = static_cast<int>(Column) % 2 == 1;
 
 	// Adjust the XRowShifted depending on whether it's an odd row or not
 	XRowShifted = YRow + ( HexRadius * sqrt3 * 0.5f); // Shift X row by half a hex width if YRow is shifted
+}
+TMap<FIntVector, FIntVector> AGridManager::FindPath(FIntVector StartPosition, bool& PathFound)
+{
+	// Initialize the targets array with the start node
+	TArray<FIntVector> Targets;
+	Targets.Add(StartPosition);
+
+	// Initialize the Cost So Far map with the start node having 0 cost
+	TMap<FIntVector, int> CostSoFar;
+	CostSoFar.Add(StartPosition, 0);
+
+	// Initialize the VisitedHex array
+	TArray<FIntVector> VisitedHex;
+
+	// Initialize the PathToTake Map, traversing this map in reverse order gives us the shortest path
+	TMap<FIntVector, FIntVector> PathToTake;
+	
+	// Keep looping while there are targets to explore
+	while (Targets.Num() > 0)
+	{
+		// Get the hex with the lowest cost from the targets
+		FIntVector Current = GetLowestCostHexCoordinates(Targets, CostSoFar, VisitedHex);
+
+		// If the current hex is the goal, break the loop
+		if (Current == Goal)
+		{
+			break;
+		}
+
+		// Remove the current hex from the targets
+		Targets.Remove(Current);
+
+		// Find the neighbour Hex tiles based on the current, exclude Hex tiles we have already visited
+		const TArray<FIntVector> Neighbours = GetValidUnvisitedNeighbours(Current, VisitedHex);
+		AHexagon* CurrentHex = *HexCells.Find(Current);
+
+		for (FIntVector Neighbour : Neighbours)
+		{
+			int NewCost = CostSoFar[Current] + CurrentHex->HexDataAsset->TravelCost;
+
+			// Only update cost if this is a new neighbor or the new cost is lower
+			if (!CostSoFar.Contains(Neighbour) || NewCost < CostSoFar[Neighbour])
+			{
+				// Update the cost so far for the neighbor
+				CostSoFar.Add(Neighbour, NewCost);  // or CostSoFar[Neighbour] = NewCost if it already exists
+
+				// Add the neighbor to the targets if not already added
+				if (!Targets.Contains(Neighbour))
+				{
+					Targets.Add(Neighbour);
+				}
+
+				// Record the path: Neighbour came from Current
+				PathToTake.Add(Neighbour, Current);
+			}
+		}
+
+		VisitedHex.Add(Current);
+	}
+
+	PathFound =  PathToTake.Contains(Goal);
+	return PathToTake;
+}
+
+void AGridManager::DrawPath(const FIntVector StartPosition,const TMap<FIntVector, FIntVector> PathToTake)
+{
+	// Step 1: Reset all the hex tiles to normal state (excluding the goal)
+	SetAllHexState(EHexState::Normal);
+
+	// Step 2: Traverse the PathToTake from goal to start and build the path
+	TArray<FIntVector> Path;
+	FIntVector CurrentHexCoord = Goal;
+
+	while (CurrentHexCoord != StartPosition)
+	{
+		// Add the current hex to the path array
+		Path.Add(CurrentHexCoord);
+
+		// Find the next hex in the path
+		const FIntVector* NextHexCoord = PathToTake.Find(CurrentHexCoord);
+
+		// If no valid next hex is found, log a warning and break the loop
+		if (!NextHexCoord)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("PathToTake is incomplete or broken at hex: %s"), *CurrentHexCoord.ToString());
+			break;
+		}
+
+		// Move to the next hex in the path
+		CurrentHexCoord = *NextHexCoord;
+	}
+
+	// Add the start position to the path (since we don't include it in the while loop)
+	Path.Add(StartPosition);
+
+	// Step 3: Reverse the path, so we can traverse it from start to goal
+	Algo::Reverse(Path);
+
+	// Step 4: Set each hex in the path to "Selected"
+	for (const FIntVector& HexCoord : Path)
+	{
+		if (AHexagon** Hex = HexCells.Find(HexCoord); Hex && *Hex)
+		{
+			(*Hex)->SetHexState(EHexState::Selected);
+		}
+	}
+
+	// Step 5: Set the start and goal hex tiles to "special" so they have a different color.
+	if (AHexagon** StartHex = HexCells.Find(StartPosition); StartHex && *StartHex)
+	{
+		(*StartHex)->SetHexState(EHexState::Special);
+	}
+
+	if (AHexagon** GoalHex = HexCells.Find(Goal); GoalHex && *GoalHex)
+	{
+		(*GoalHex)->SetHexState(EHexState::Special);
+	}
+}
+
+
+FIntVector AGridManager::GetLowestCostHexCoordinates(const TArray<FIntVector>& Neighbours, const TMap<FIntVector, int>& CostSoFar,
+                                                     const TArray<FIntVector>& Visited)
+{
+	FIntVector LowestCostHex;
+	int MaxCost = INT_MAX;  // Start with the maximum possible cost
+
+	// Loop through all neighbors
+	for (FIntVector Neighbour : Neighbours)
+	{
+		// Check if the neighbor has already been visited
+		if (Visited.Contains(Neighbour))
+		{
+			continue;  // Skip this neighbor if it's already visited
+		}
+
+		// Find the cost of the neighbor in the CostSoFar map
+		const int* NeighbourCost = CostSoFar.Find(Neighbour);
+		if (NeighbourCost && *NeighbourCost < MaxCost)
+		{
+			// Update the lowest cost hex and max cost if this neighbor has a lower cost
+			MaxCost = *NeighbourCost;
+			LowestCostHex = Neighbour;
+		}
+	}
+
+	// Return the hex with the lowest cost
+	return LowestCostHex;
+}
+
+TArray<FIntVector> AGridManager::GetValidUnvisitedNeighbours(const FIntVector& Current,	const TArray<FIntVector>& VisitedHex)
+{
+	TArray<FIntVector>Neighbours;
+	
+	// Initialise the Cubic Coordinates directions
+	static const TArray<FIntVector> CubeDirections = {
+		FIntVector(1, -1, 0),   // Right
+		FIntVector(1, 0, -1),   // Upper-right
+		FIntVector(0, 1, -1),   // Upper-left
+		FIntVector(-1, 1, 0),   // Left
+		FIntVector(-1, 0, 1),   // Lower-left
+		FIntVector(0, -1, 1)    // Lower-right
+	};
+	
+	for (const FIntVector Direction : CubeDirections)
+	{
+		FIntVector NeighbourHex = Current + Direction;
+		if (!VisitedHex.Contains(NeighbourHex))
+		{
+			if (HexCells.Contains(NeighbourHex) && !IsObstacle(NeighbourHex))
+			{
+				Neighbours.Add(NeighbourHex);
+			}
+		}
+	}
+
+	return Neighbours;
 }
 
 bool AGridManager::IsObstacle(const FIntVector Position)
@@ -191,35 +362,81 @@ bool AGridManager::IsObstacle(const FIntVector Position)
 	if (Hex && *Hex) // Check if Hex exists and is valid
 	{
 		// Check if Hex has a valid HexDataAsset
-		if (!(*Hex)->HexDataAsset)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Hex at %s has no HexDataAsset."), *Position.ToString());
-			return false;  // Early return if no data asset
-		}
+		if (!(*Hex)->HexDataAsset) return false;
 
 		// Get the HexType from the HexDataAsset
 		EHexType HexType = (*Hex)->HexDataAsset->HexType;
-		UE_LOG(LogTemp, Warning, TEXT("Hex at %s has HexType: %d"), *Position.ToString(), (int)HexType);
 
 		// Return whether the HexType is Blockable
 		return HexType == EHexType::Blockable;
 	}
-
 	// Return false if the Hex was not found or invalid
 	return false;
 }
 
-void AGridManager::OnTileClicked(const FIntVector HexPosition)
+void AGridManager::SetAllHexState(const EHexState NewHexState)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Hex clicked at: %s"), *HexPosition.ToString());
+	TArray<FIntVector> AllHexKeys;
+	HexCells.GetKeys(AllHexKeys);
+	AllHexKeys.Remove(Goal);
+
+	// Iterate over all hex keys (positions)
+	for (const FIntVector& Key : AllHexKeys)
+	{
+		// Check if the key exists in the HexCells map
+		AHexagon** Hex = HexCells.Find(Key);
+        
+		// If a hexagon is found at the given key, set its state
+		if (Hex && *Hex)
+		{
+			(*Hex)->SetHexState(NewHexState);
+		}
+	}
+
 }
 
+void AGridManager::SetNeighbourHexHighlighted(const FIntVector& SelectedHex)
+{
+	TArray<FIntVector> VisitedHex;
+	TArray<FIntVector> ValidNeighbours = GetValidUnvisitedNeighbours(SelectedHex, VisitedHex);
+
+	SetAllHexState(EHexState::Normal);
+	// Loop over the result and process each valid neighbour
+	for (const FIntVector& Neighbour : ValidNeighbours)
+	{
+		AHexagon** Hex = HexCells.Find(Neighbour);
+		if (Hex && *Hex)
+		{
+			(*Hex)->SetHexState(EHexState::Selected);
+		}
+	}
+	
+	if (AHexagon** Selection = HexCells.Find(SelectedHex); Selection && *Selection)
+	{
+		(*Selection)->SetHexState(EHexState::Special);
+	}
+}
+
+void AGridManager::OnTileClicked(const FIntVector HexPosition)
+{
+	UE_LOG(LogTemp, Log, TEXT("Hex clicked at: %s"), *HexPosition.ToString());
+	bool PathFound;
+	
+	const TMap<FIntVector,FIntVector> PathToTake = FindPath(HexPosition, PathFound);
+	if (PathFound)
+	{
+	DrawPath(HexPosition, PathToTake );
+	}
+	else
+	{
+		SetAllHexState(EHexState::Normal);
+	}
+}
 
 // Called when the game starts or when spawned
 void AGridManager::BeginPlay()
 {
 	Super::BeginPlay();
-
 	GenerateMap();
 }
 
