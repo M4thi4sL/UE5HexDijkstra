@@ -6,11 +6,11 @@ This project is a complete refactor of the [original DijkstraBlueprint repositor
 
 ✅ [Dijkstra_blueprint](https://github.com/M4thi4sL/UE5HexDijkstra/tree/Dijkstra_Blueprint) contains the latest version of the blueprint only implementation.
 
-🚧 [Dijkstra_C++](https://github.com/M4thi4sL/UE5HexDijkstra/tree/Dijkstra_C%2B%2B) contains the latest version of the C++ / Blueprint implementation. 
+✅ [Dijkstra_C++](https://github.com/M4thi4sL/UE5HexDijkstra/tree/Dijkstra_C%2B%2B) contains the latest version of the C++ / Blueprint implementation. 
 
 You can also find a zipped up version of either project in the release section.
 
-🚧 TODO: add speed comparison
+🚧 TODO: add speed comparison between blueprint and c++ versions
 
 # Features
 
@@ -21,6 +21,8 @@ Responsible for managing the hexagonal grid system.
  * Random Grid Generation: Creates a random hex grid based on given dimensions.
  
  * Goal Assignment: Randomly sets a goal within the grid for pathfinding.
+   
+ * Path-finding implementation based on Dijkstra.
  
 ### BP_Hexagon
 
