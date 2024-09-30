@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Hexagon.h"
-#include "PDA_Hex.h"
+#include "Hexagon/Hexagon.h"
+#include "DataAssets/PDA_Hex.h"
 #include "StartPoint.h"
 #include "GridManager.generated.h"
 

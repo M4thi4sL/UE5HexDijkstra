@@ -4,7 +4,7 @@
 #include "GridManager.h"
 #include "StartPoint.h"
 #include "Kismet/GameplayStatics.h"
-#include "Hexagon.h"
+#include "Hexagon/Hexagon.h"
 #include "Algo/RandomShuffle.h"
 
 // Sets default values

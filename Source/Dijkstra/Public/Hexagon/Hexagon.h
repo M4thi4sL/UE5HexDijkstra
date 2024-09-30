@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PDA_Hex.h"
+#include "DataAssets/PDA_Hex.h"
 #include "EHexState.h"
 #include "Hexagon.generated.h"
 
