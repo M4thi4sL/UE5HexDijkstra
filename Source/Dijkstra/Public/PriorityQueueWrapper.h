@@ -13,6 +13,10 @@ class DIJKSTRA_API UPriorityQueue : public UObject {
 public:
     UPriorityQueue();
 
+    // Order of priority: Ascending or Descending (exposed on spawn)
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = "true"), Category = "PriorityQueue")
+    EPriorityOrder Order;
+    
     // Sets the sort order of the priority queue (Ascending or Descending).
     UFUNCTION(BlueprintCallable, Category = "Utilities|PriorityQueue")
     void SetSortOrder(EPriorityOrder NewOrder);
@@ -68,11 +72,16 @@ public:
     UFUNCTION(BlueprintCallable, CustomThunk, meta = (DisplayName = "Priorities", CompactNodeTitle = "PRIORITIES"), Category = "Utilities|PriorityQueue")
     void GetPriorities(TArray<float>& Priorities);
 
-    // Returns the index of the specified element in the priority queue if it exists.
-    // Returns -1 if the element is not found.
-    UFUNCTION(BlueprintPure, meta = (Keywords = "find index position rank", CompactNodeTitle = "FIND"), Category = "Utilities|PriorityQueue")
-    bool Find(UObject* Element, int32& Index) const;
+    // Returns the priority value of the specified element in the priority queue if it exists.
+    // Returns -1.0f if the element is not found.
+    UFUNCTION(BlueprintPure, meta = (Keywords = "find", CompactNodeTitle = "FIND"), Category = "Utilities|PriorityQueue")
+    bool Find(const UObject* Element, float& Priority) ;
 
+    // Finds the specified element in the priority queue and outputs its index.
+    // Returns true if the element is found.
+    UFUNCTION(BlueprintCallable, meta = (Keywords = "Pos, Position, Index, location", CompactNodeTitle = "POS"), Category = "Utilities|PriorityQueue")
+    bool GetPosition(UObject* Element, int32& Index) const;
+    
     // Custom thunks
     DECLARE_FUNCTION(execGetKeys);
     DECLARE_FUNCTION(execGetPriorities);

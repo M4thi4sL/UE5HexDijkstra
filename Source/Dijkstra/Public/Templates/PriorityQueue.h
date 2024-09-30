@@ -34,7 +34,12 @@ struct TPriorityQueueNode {
 
     // Comparison based on the specified order
     bool Compare(const TPriorityQueueNode<InElementType>& Other, EPriorityOrder Order) const {
-        return (Order == EPriorityOrder::Ascending) ? Priority < Other.Priority : Priority > Other.Priority;
+        // Ascending: lower priority value is higher precedence
+        if (Order == EPriorityOrder::Ascending) {
+            return Priority < Other.Priority;
+        }
+        // Descending: higher priority value is higher precedence
+        return Priority > Other.Priority;
     }
 };
 
@@ -59,7 +64,7 @@ public:
             TPriorityQueueNode<InElementType> Node = Array[0];
             Array[0] = Array.Last();
             Array.Pop();
-            HeapifyDown(0);
+            Heapify();
 
             // Return valid element if not expired
             if (Node.Element.IsValid()) {
@@ -76,19 +81,18 @@ public:
                 // Update the priority of the existing element
                 Array[i].Priority = Priority;
 
-                // Rebalanced the heap since priority has changed
-                HeapifyUp(i);
-                HeapifyDown(i);
-
+                // Sort the entire array after updating the priority
+                Heapify();
                 return; // Return since we updated the existing element
             }
         }
 
         // If the element doesn't exist, add it as a new node
         Array.Add(TPriorityQueueNode<InElementType>(Element, Priority));
-        HeapifyUp(Array.Num() - 1);
+        Heapify(); // Sort the array after adding the new element
     }
 
+    
     InElementType* Peek(EPeekPosition PeekPosition , float& OutPriority) const {
         if (IsEmpty()) {
             OutPriority = -1.0f; // Set an invalid priority if the queue is empty
@@ -128,59 +132,57 @@ public:
         return Array;
     }
 
-    bool Find(const InElementType* Element, int32& OutIndex) const {
+    bool Find(const InElementType* Element, float& OutPriority) const {
         if (!Element) {
             return false; // Return false if the element is invalid
         }
 
         // Iterate over all nodes in the priority queue
-        for (int32 i = 0; i < Array.Num(); ++i) {
-            if (Array[i].Element.Get() == Element) {
-                OutIndex = i; // Set the index of the element if found
+        for (const auto& Node : Array) {
+            if (Node.Element.Get() == Element) {
+                OutPriority = Node.Priority; // Set the priority if found
                 return true;  // Return true to indicate it was found
             }
         }
 
-        OutIndex = -1; // Set to -1 if not found
+        OutPriority = -1.0f; // Optionally set an invalid priority if not found
+        return false;  // Return false if the element is not found
+    }
+
+    bool GetPosition(const InElementType* Element, int32& OutIndex) const {
+        if (!Element) {
+            OutIndex = -1;
+            return false; // Return false if the element is invalid
+        }
+
+        // Iterate over all nodes in the priority queue
+        for (int32 Index = 0; Index < Array.Num(); ++Index) {
+            if (Array[Index].Element.Get() == Element) {
+                OutIndex = Index; // Set the index of the element if found
+                return true;  // Return true to indicate it was found
+            }
+        }
+
+        OutIndex = -1; // Set index to -1 if not found
         return false;  // Return false if the element is not found
     }
     
 private:
     TArray<TPriorityQueueNode<InElementType>> Array;
     EPriorityOrder Order;
-
+    
     void Heapify() {
-        for (int32 i = Array.Num() / 2 - 1; i >= 0; --i) {
-            HeapifyDown(i);
-        }
-    }
-
-    void HeapifyUp(int32 Index) {
-        while (Index > 0) {
-            int32 ParentIndex = (Index - 1) / 2;
-            if (!Array[Index].Compare(Array[ParentIndex], Order)) {
-                break;
+        Array.Sort([this](const TPriorityQueueNode<InElementType>& A, const TPriorityQueueNode<InElementType>& B) {
+            // Ascending: lower priority value is higher precedence
+            if (Order == EPriorityOrder::Ascending) {
+                return A.Priority < B.Priority;
             }
-            Swap(Array[Index], Array[ParentIndex]);
-            Index = ParentIndex;
-        }
+            // Descending: higher priority value is higher precedence
+            return A.Priority > B.Priority;
+        });
     }
 
-    void HeapifyDown(int32 Index) {
-        int32 LeftChild = 2 * Index + 1;
-        int32 RightChild = 2 * Index + 2;
-        int32 SmallestOrLargest = Index;
 
-        if (LeftChild < Array.Num() && Array[LeftChild].Compare(Array[SmallestOrLargest], Order)) {
-            SmallestOrLargest = LeftChild;
-        }
-        if (RightChild < Array.Num() && Array[RightChild].Compare(Array[SmallestOrLargest], Order)) {
-            SmallestOrLargest = RightChild;
-        }
-        if (SmallestOrLargest != Index) {
-            Swap(Array[Index], Array[SmallestOrLargest]);
-            HeapifyDown(SmallestOrLargest);
-        }
-    }
+
 };
 

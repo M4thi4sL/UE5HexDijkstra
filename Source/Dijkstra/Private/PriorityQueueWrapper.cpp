@@ -8,6 +8,7 @@ UPriorityQueue::UPriorityQueue()
 
 // Regular function implementations (no changes needed for these)
 void UPriorityQueue::SetSortOrder(EPriorityOrder NewOrder) {
+    Order = NewOrder;
     PriorityQueue.SetSortOrder(NewOrder);
 }
 
@@ -66,6 +67,8 @@ void UPriorityQueue::PrintPriorityQueue(const UObject* WorldContextObject, bool 
         }
     }
 
+    Output += "\n---------------------------------------------------------------------------";
+
     // Print to screen
     if (bPrintToScreen && WorldContextObject) {
         UKismetSystemLibrary::PrintString(WorldContextObject, Output, bPrintToScreen, bPrintToLog, TextColor, Duration);
@@ -98,11 +101,21 @@ void UPriorityQueue::GetPriorities(TArray<float>& OutPriorities) {
     }
 }
 
-bool UPriorityQueue::Find(UObject* Element, int32& Index) const
+bool UPriorityQueue::Find(const UObject* Element, float& Priority) 
 {
-    return PriorityQueue.Find(Element, Index);
+    return PriorityQueue.Find(Element, Priority);
 }
 
+bool UPriorityQueue::GetPosition(UObject* Element, int32& Index) const
+{
+    // Return false if the input element is not valid
+    if (!Element) {
+        Index = -1;
+        return false;
+    }
+
+    return PriorityQueue.GetPosition(Element, Index);
+}
 // Custom thunk for GetKeys
 void UPriorityQueue::execGetKeys(UObject* Context, FFrame& Stack, void* const Result) {
     P_GET_TARRAY_REF(UObject*, Keys);
