@@ -2,13 +2,13 @@
 #include "Kismet/KismetSystemLibrary.h"
 
 // Constructor
+
 UPriorityQueue::UPriorityQueue()
-    : PriorityQueue(EPriorityOrder::Ascending) // Default to ascending order
-{}
+{
+}
 
 // Regular function implementations (no changes needed for these)
 void UPriorityQueue::SetSortOrder(EPriorityOrder NewOrder) {
-    Order = NewOrder;
     PriorityQueue.SetSortOrder(NewOrder);
 }
 
@@ -51,7 +51,7 @@ bool UPriorityQueue::Contains(UObject* Element) const {
     return Element ? PriorityQueue.Contains(Element) : false;
 }
 
-void UPriorityQueue::PrintPriorityQueue(const UObject* WorldContextObject, bool bPrintToScreen, bool bPrintToLog, FLinearColor TextColor, float Duration) const {
+void UPriorityQueue::PrintPriorityQueue(const UObject* WorldContextObject,const bool bPrintToScreen, const bool bPrintToLog, const FLinearColor TextColor,const float Duration) const {
 #if WITH_EDITOR
     const auto& Nodes = PriorityQueue.GetArray();
 

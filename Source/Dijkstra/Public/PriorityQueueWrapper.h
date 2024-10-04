@@ -12,10 +12,6 @@ class DIJKSTRA_API UPriorityQueue : public UObject {
 
 public:
     UPriorityQueue();
-
-    // Order of priority: Ascending or Descending (exposed on spawn)
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = "true"), Category = "PriorityQueue")
-    EPriorityOrder Order;
     
     // Sets the sort order of the priority queue (Ascending or Descending).
     UFUNCTION(BlueprintCallable, Category = "Utilities|PriorityQueue")
@@ -62,7 +58,7 @@ public:
 
     // Prints all elements and their priorities in the queue to the log or screen for debugging.
     UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", CallableWithoutWorldContext, Keywords = "log print", AdvancedDisplay = "2", DevelopmentOnly), Category = "Utilities|PriorityQueue")
-    void PrintPriorityQueue(const UObject* WorldContextObject, bool bPrintToScreen = true, bool bPrintToLog = true, FLinearColor TextColor = FLinearColor(0.0f, 0.66f, 1.0f), float Duration = 2.f) const;
+    void PrintPriorityQueue(const UObject* WorldContextObject, const bool bPrintToScreen = true, const bool bPrintToLog = true, const FLinearColor TextColor = FLinearColor(0.0f, 0.66f, 1.0f), const float Duration = 2.f) const;
 
     // Returns an array of all elements in the priority queue.
     UFUNCTION(BlueprintCallable, CustomThunk, meta = (DisplayName = "Keys", CompactNodeTitle = "KEYS"), Category = "Utilities|PriorityQueue")

@@ -11,35 +11,43 @@ enum class EPriorityOrder : uint8 {
     Descending UMETA(DisplayName = "Descending")
 };
 
-// What are we looking at?
 UENUM(BlueprintType)
 enum class EPeekPosition : uint8 {
     Head UMETA(DisplayName = "Head"),
     Tail UMETA(DisplayName = "Tail")
 };
 
-// Node structure for the priority queue
-template <typename InElementType>
+// Node structure for non-UObject types
+template <typename InElementType, typename = void>
 struct TPriorityQueueNode {
-    TWeakObjectPtr<InElementType> Element; // Use TWeakObjectPtr to handle weak references to UObjects
+    InElementType Element; // Directly store the element
     float Priority;
 
-    // Default constructor
     TPriorityQueueNode()
-        : Element(nullptr), Priority(0.0f) {}
+        : Priority(-1.0f) {}
 
-    // Parameterized constructor
+    TPriorityQueueNode(const InElementType& InElement, float InPriority)
+        : Element(InElement), Priority(InPriority) {}
+
+    bool Compare(const TPriorityQueueNode<InElementType>& Other, EPriorityOrder Order) const {
+        return Order == EPriorityOrder::Ascending ? Priority < Other.Priority : Priority > Other.Priority;
+    }
+};
+
+// Specialization for UObject types using TWeakObjectPtr
+template <typename InElementType>
+struct TPriorityQueueNode<InElementType, typename TEnableIf<TIsDerivedFrom<InElementType, UObject>::Value>::Type> {
+    TWeakObjectPtr<InElementType> Element; // Use TWeakObjectPtr for UObjects
+    float Priority;
+
+    TPriorityQueueNode()
+        : Priority(-1.0f) {}
+
     TPriorityQueueNode(InElementType* InElement, float InPriority)
         : Element(InElement), Priority(InPriority) {}
 
-    // Comparison based on the specified order
     bool Compare(const TPriorityQueueNode<InElementType>& Other, EPriorityOrder Order) const {
-        // Ascending: lower priority value is higher precedence
-        if (Order == EPriorityOrder::Ascending) {
-            return Priority < Other.Priority;
-        }
-        // Descending: higher priority value is higher precedence
-        return Priority > Other.Priority;
+        return Order == EPriorityOrder::Ascending ? Priority < Other.Priority : Priority > Other.Priority;
     }
 };
 
@@ -59,50 +67,95 @@ public:
         return Order;
     }
 
-    InElementType* Pop() {
-        while (!IsEmpty()) {
-            TPriorityQueueNode<InElementType> Node = Array[0];
-            Array[0] = Array.Last();
-            Array.Pop();
-            Heapify();
+    // Specialization for non-UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<!TIsDerivedFrom<T, UObject>::Value, T>::Type
+    Pop() {
+        check(!IsEmpty());
+        TPriorityQueueNode<T> Node = Array[0];
+        Array[0] = Array.Last();
+        Array.Pop();
+        Heapify();
 
-            // Return valid element if not expired
-            if (Node.Element.IsValid()) {
-                return Node.Element.Get();
-            }
-        }
-        return nullptr;
+        return Node.Element;
     }
 
-    void Push(InElementType* Element, float Priority) {
+    // Specialization for UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<TIsDerivedFrom<T, UObject>::Value, T*>::Type
+    Pop() {
+        check(!IsEmpty());
+        TPriorityQueueNode<T> Node = Array[0];
+        Array[0] = Array.Last();
+        Array.Pop();
+        Heapify();
+
+        return Node.Element.IsValid() ? Node.Element.Get() : nullptr;
+    }
+
+    // Push method for non-UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<!TIsDerivedFrom<T, UObject>::Value>::Type
+    Push(const T& Element, float Priority) {
+        // Check if the element already exists in the queue
+        for (int32 i = 0; i < Array.Num(); ++i) {
+            if (Array[i].Element == Element) {
+                // Update the priority of the existing element
+                Array[i].Priority = Priority;
+                Heapify();
+                return;
+            }
+        }
+
+        // Add new node for non-UObject type
+        Array.Add(TPriorityQueueNode<T>(Element, Priority));
+        Heapify();
+    }
+
+    // Push method for UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<TIsDerivedFrom<T, UObject>::Value>::Type
+    Push(T* Element, float Priority) {
         // Check if the element already exists in the queue
         for (int32 i = 0; i < Array.Num(); ++i) {
             if (Array[i].Element.Get() == Element) {
                 // Update the priority of the existing element
                 Array[i].Priority = Priority;
-
-                // Sort the entire array after updating the priority
                 Heapify();
-                return; // Return since we updated the existing element
+                return;
             }
         }
 
-        // If the element doesn't exist, add it as a new node
-        Array.Add(TPriorityQueueNode<InElementType>(Element, Priority));
-        Heapify(); // Sort the array after adding the new element
+        // Add new node for UObject type
+        Array.Add(TPriorityQueueNode<T>(Element, Priority));
+        Heapify();
     }
 
-    
-    InElementType* Peek(EPeekPosition PeekPosition , float& OutPriority) const {
+    // Peek method for non-UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<!TIsDerivedFrom<T, UObject>::Value, T>::Type
+    Peek(EPeekPosition PeekPosition, float& OutPriority) const {
+        check(!IsEmpty());
+
+        const auto& Node = (PeekPosition == EPeekPosition::Head) ? Array[0] : Array.Last();
+        OutPriority = Node.Priority;
+        return Node.Element;
+    }
+
+    // Peek method for UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<TIsDerivedFrom<T, UObject>::Value, T*>::Type
+    Peek(EPeekPosition PeekPosition, float& OutPriority) const {
         if (IsEmpty()) {
-            OutPriority = -1.0f; // Set an invalid priority if the queue is empty
+            OutPriority = -1.0f;
             return nullptr;
         }
 
         const auto& Node = (PeekPosition == EPeekPosition::Head) ? Array[0] : Array.Last();
         OutPriority = Node.Priority;
-        return Node.Element.Get();
+        return Node.Element.IsValid() ? Node.Element.Get() : nullptr;
     }
+
     bool IsEmpty() const {
         return Array.Num() == 0;
     }
@@ -114,12 +167,25 @@ public:
     void Clear() {
         Array.Empty();
     }
-    
 
-    bool Contains(const InElementType* Element) const {
-        if (!Element) return false;
-
+    // Contains method for non-UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<!TIsDerivedFrom<T, UObject>::Value, bool>::Type
+    Contains(const T& Element) const {
+        // Use TPriorityQueueNode<InElementType> to match the type in the array
         for (const TPriorityQueueNode<InElementType>& Node : Array) {
+            if (Node.Element == Element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Contains method for UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<TIsDerivedFrom<T, UObject>::Value, bool>::Type
+    Contains(const T* Element) const {
+        for (const TPriorityQueueNode<T>& Node : Array) {
             if (Node.Element.IsValid() && Node.Element.Get() == Element) {
                 return true;
             }
@@ -127,37 +193,40 @@ public:
         return false;
     }
 
-    // Getter for internal array
-    const TArray<TPriorityQueueNode<InElementType>>& GetArray() const {
-        return Array;
-    }
-
-    bool Find(const InElementType* Element, float& OutPriority) const {
-        if (!Element) {
-            return false; // Return false if the element is invalid
-        }
-
-        // Iterate over all nodes in the priority queue
-        for (const auto& Node : Array) {
-            if (Node.Element.Get() == Element) {
-                OutPriority = Node.Priority; // Set the priority if found
-                return true;  // Return true to indicate it was found
+    // Find method for non-UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<!TIsDerivedFrom<T, UObject>::Value, bool>::Type
+    Find(const T& Element, float& OutPriority) const {
+        for (const TPriorityQueueNode<T>& Node : Array) {
+            if (Node.Element == Element) {
+                OutPriority = Node.Priority;
+                return true;
             }
         }
-
-        OutPriority = -1.0f; // Optionally set an invalid priority if not found
-        return false;  // Return false if the element is not found
+        OutPriority = -1.0f;
+        return false;
     }
 
-    bool GetPosition(const InElementType* Element, int32& OutIndex) const {
-        if (!Element) {
-            OutIndex = -1;
-            return false; // Return false if the element is invalid
+    // Find method for UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<TIsDerivedFrom<T, UObject>::Value, bool>::Type
+    Find(const T* Element, float& OutPriority) const {
+        for (const TPriorityQueueNode<T>& Node : Array) {
+            if (Node.Element.IsValid() && Node.Element.Get() == Element) {
+                OutPriority = Node.Priority;
+                return true;
+            }
         }
+        OutPriority = -1.0f;
+        return false;
+    }
 
-        // Iterate over all nodes in the priority queue
+    // GetPosition method for non-UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<!TIsDerivedFrom<T, UObject>::Value, bool>::Type
+    GetPosition(const T& Element, int32& OutIndex) const {
         for (int32 Index = 0; Index < Array.Num(); ++Index) {
-            if (Array[Index].Element.Get() == Element) {
+            if (Array[Index].Element == Element) {
                 OutIndex = Index; // Set the index of the element if found
                 return true;  // Return true to indicate it was found
             }
@@ -166,23 +235,37 @@ public:
         OutIndex = -1; // Set index to -1 if not found
         return false;  // Return false if the element is not found
     }
-    
+
+    // GetPosition method for UObject types
+    template <typename T = InElementType>
+    typename TEnableIf<TIsDerivedFrom<T, UObject>::Value, bool>::Type
+    GetPosition(const T* Element, int32& OutIndex) const {
+        for (int32 Index = 0; Index < Array.Num(); ++Index) {
+            if (Array[Index].Element.IsValid() && Array[Index].Element.Get() == Element) {
+                OutIndex = Index; // Set the index of the element if found
+                return true;  // Return true to indicate it was found
+            }
+        }
+
+        OutIndex = -1; // Set index to -1 if not found
+        return false;  // Return false if the element is not found
+    }
+
+    // Getter for internal array
+    const TArray<TPriorityQueueNode<InElementType>>& GetArray() const {
+        return Array;
+    }
+
 private:
     TArray<TPriorityQueueNode<InElementType>> Array;
     EPriorityOrder Order;
-    
+
     void Heapify() {
         Array.Sort([this](const TPriorityQueueNode<InElementType>& A, const TPriorityQueueNode<InElementType>& B) {
-            // Ascending: lower priority value is higher precedence
             if (Order == EPriorityOrder::Ascending) {
                 return A.Priority < B.Priority;
             }
-            // Descending: higher priority value is higher precedence
             return A.Priority > B.Priority;
         });
     }
-
-
-
 };
-
