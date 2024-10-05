@@ -100,19 +100,10 @@ void AGridManager::GenerateGrid()
 
                 // Bind the click event
                 Hex->HexClicked.AddDynamic(this, &AGridManager::OnTileClicked);
-
-                // Debug log
-            	#if WITH_EDITOR
-                UE_LOG(LogTemp, Log, TEXT("Hex added to HexCells at %s, Hex Label: %s"), *CubeCoord.ToString(), *Hex->GetActorLabel());
-				#endif
-            	
             }
         }
     }
-
-    UE_LOG(LogTemp, Log, TEXT("HexCells Count: %d"), HexCells.Num());
 }
-
 
 void AGridManager::SetGoal()
 {
@@ -179,43 +170,54 @@ void AGridManager::CalculateHexPositions(const int Column,const int Row, const f
 }
 TMap<FIntVector, FIntVector> AGridManager::FindPath(FIntVector StartPosition, bool& PathFound)
 {
+    QUICK_SCOPE_CYCLE_COUNTER(STAT_FIND_PATH);
+
     // Initialize the targets array with the start node
     TArray<FIntVector> Targets;
     Targets.Add(StartPosition);
 
-	// Clear the priority queue to start fresh
-	PriorityQueue.Clear();
-	PriorityQueue.Push(StartPosition, 0.0f);
+    // Clear the priority queue to start fresh
+    PriorityQueue.Clear();
+    PriorityQueue.Push(StartPosition, 0.0f);
 
     // Initialize the VisitedHex array
     TArray<FIntVector> VisitedHex;
 
     // Initialize the PathToTake Map, traversing this map in reverse order gives us the shortest path
     TMap<FIntVector, FIntVector> PathToTake;
-    
+
     // Keep looping while there are targets to explore
     while (Targets.Num() > 0)
     {
         // Get the hex with the lowest cost from the targets
-        float CurrentPriority;
-    	FIntVector Current = PriorityQueue.Peek(EPeekPosition::Head, CurrentPriority);
-    	PriorityQueue.Pop(); // Remove the element after peeking
-        
+        float CurrentPriority = 0.0f;
+
+        // Ensure the priority queue is not empty before attempting to Peek or Pop
+        if (PriorityQueue.IsEmpty())break;
+        FIntVector Current = PriorityQueue.Peek(EPeekPosition::Head, CurrentPriority);
+        PriorityQueue.Pop(); // Remove the element after peeking
+
         // If the current hex is the goal, break the loop
-        if (Current == Goal)
+        if (Current == Goal) break;
+
+        // Check if Current is in HexCells and is valid
+        AHexagon** CurrentHexPtr = HexCells.Find(Current);
+        if (!CurrentHexPtr || !*CurrentHexPtr)
         {
-            break;
+            // Skip this node if the corresponding AHexagon is not found or invalid
+            continue;
         }
+
+        const AHexagon* CurrentHex = *CurrentHexPtr;
 
         // Find the neighbour Hex tiles based on the current, exclude Hex tiles we have already visited
         const TArray<FIntVector> Neighbours = GetValidUnvisitedNeighbours(Current, VisitedHex);
-        const AHexagon* CurrentHex = *HexCells.Find(Current);
 
-        for (FIntVector Neighbour : Neighbours)
+    	for (FIntVector Neighbour : Neighbours)
         {
             float OldCost;
             bool bNeighbourInQueue = PriorityQueue.Find(Neighbour, OldCost);
-            
+
             // Calculate the new cost to reach the neighbour
             int NewCost = static_cast<int>(CurrentPriority) + CurrentHex->HexDataAsset->TravelCost;
 
@@ -230,24 +232,24 @@ TMap<FIntVector, FIntVector> AGridManager::FindPath(FIntVector StartPosition, bo
                 {
                     Targets.Add(Neighbour);
                 }
-
                 // Record the path: Neighbour came from Current
                 PathToTake.Add(Neighbour, Current);
             }
         }
-
         // Mark the current hex as visited
         VisitedHex.Add(Current);
     }
-
     // Check if the goal was found in the path
     PathFound = PathToTake.Contains(Goal);
     return PathToTake;
 }
 
 
+
+
 void AGridManager::DrawPath(const FIntVector StartPosition,const TMap<FIntVector, FIntVector> PathToTake)
 {
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_DRAW_PATH)
 	// Step 1: Reset all the hex tiles to normal state (excluding the goal)
 	SetAllHexState(EHexState::Normal);
 
@@ -395,22 +397,13 @@ void AGridManager::SetNeighbourHexHighlighted(const FIntVector& SelectedHex)
 
 void AGridManager::OnTileClicked(const FIntVector HexPosition)
 {
-	UE_LOG(LogTemp, Log, TEXT("Hex clicked at: %s"), *HexPosition.ToString());
-
-	//Debug draws the neighbouring hexes 
-	// SetNeighbourHexHighlighted(HexPosition);
-
+	//UE_LOG(LogTemp, Log, TEXT("Hex clicked at: %s"), *HexPosition.ToString());
+	
 	// Find the path, then draw the path we found.
 	bool PathFound;
 	const TMap<FIntVector,FIntVector> PathToTake = FindPath(HexPosition, PathFound);
-	if (PathFound)
-	{
-	DrawPath(HexPosition, PathToTake );
-	}
-	else
-	{
-		SetAllHexState(EHexState::Normal);
-	}
+	if (PathFound)	DrawPath(HexPosition, PathToTake );
+	else SetAllHexState(EHexState::Normal);
 }
 
 // Called when the game starts or when spawned
