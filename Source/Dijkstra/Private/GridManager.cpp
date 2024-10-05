@@ -4,7 +4,7 @@
 #include "GridManager.h"
 #include "StartPoint.h"
 #include "Kismet/GameplayStatics.h"
-#include "Hexagon.h"
+#include "Hexagon/Hexagon.h"
 #include "Algo/RandomShuffle.h"
 
 // Sets default values
@@ -26,19 +26,23 @@ void AGridManager::GenerateMap()
 
 void AGridManager::ClearGrid()
 {
-	// Combine existing hexes and startpoints
-	TArray<AActor*> ActorsToClear;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHexagon::StaticClass(), ActorsToClear);
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStartPoint::StaticClass(), ActorsToClear);
+	// Use a TSet to ensure unique actors
+	TSet<AActor*> ActorsToClear;
 
-	// Safely destroy all actors in one go
+	// Get all Hexagon actors and add them to the set
+	TArray<AActor*> Hexagons;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHexagon::StaticClass(), Hexagons);
+	ActorsToClear.Append(Hexagons);
+
+	// Get all StartPoint actors and add them to the set
+	TArray<AActor*> StartPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStartPoint::StaticClass(), StartPoints);
+	ActorsToClear.Append(StartPoints);
+
+	// Safely destroy all unique actors
 	for (AActor* Actor : ActorsToClear)
 	{
-		if (Actor)
-		{
-			// Mark for safe deletion
-			Actor->Destroy();
-		}
+		Actor->Destroy();
 	}
 
 	// Clear the Hexcell Map
@@ -96,19 +100,10 @@ void AGridManager::GenerateGrid()
 
                 // Bind the click event
                 Hex->HexClicked.AddDynamic(this, &AGridManager::OnTileClicked);
-
-                // Debug log
-            	#if WITH_EDITOR
-                UE_LOG(LogTemp, Log, TEXT("Hex added to HexCells at %s, Hex Label: %s"), *CubeCoord.ToString(), *Hex->GetActorLabel());
-				#endif
-            	
             }
         }
     }
-
-    UE_LOG(LogTemp, Log, TEXT("HexCells Count: %d"), HexCells.Num());
 }
-
 
 void AGridManager::SetGoal()
 {
@@ -153,7 +148,6 @@ void AGridManager::SetGoal()
 	UE_LOG(LogTemp, Warning, TEXT("No non-obstacle hexagons found in HexCells!"));
 }
 
-
 FIntVector AGridManager::OddqToCubeCoordinates(int OddqRow, int OddqColumn)
 {
 	int x = OddqColumn;
@@ -176,69 +170,86 @@ void AGridManager::CalculateHexPositions(const int Column,const int Row, const f
 }
 TMap<FIntVector, FIntVector> AGridManager::FindPath(FIntVector StartPosition, bool& PathFound)
 {
-	// Initialize the targets array with the start node
-	TArray<FIntVector> Targets;
-	Targets.Add(StartPosition);
+    QUICK_SCOPE_CYCLE_COUNTER(STAT_FIND_PATH);
 
-	// Initialize the Cost So Far map with the start node having 0 cost
-	TMap<FIntVector, int> CostSoFar;
-	CostSoFar.Add(StartPosition, 0);
+    // Initialize the targets array with the start node
+    TArray<FIntVector> Targets;
+    Targets.Add(StartPosition);
 
-	// Initialize the VisitedHex array
-	TArray<FIntVector> VisitedHex;
+    // Clear the priority queue to start fresh
+    PriorityQueue.Clear();
+    PriorityQueue.Push(StartPosition, 0.0f);
 
-	// Initialize the PathToTake Map, traversing this map in reverse order gives us the shortest path
-	TMap<FIntVector, FIntVector> PathToTake;
-	
-	// Keep looping while there are targets to explore
-	while (Targets.Num() > 0)
-	{
-		// Get the hex with the lowest cost from the targets
-		FIntVector Current = GetLowestCostHexCoordinates(Targets, CostSoFar, VisitedHex);
+    // Initialize the VisitedHex array
+    TArray<FIntVector> VisitedHex;
 
-		// If the current hex is the goal, break the loop
-		if (Current == Goal)
-		{
-			break;
-		}
+    // Initialize the PathToTake Map, traversing this map in reverse order gives us the shortest path
+    TMap<FIntVector, FIntVector> PathToTake;
 
-		// Remove the current hex from the targets
-		Targets.Remove(Current);
+    // Keep looping while there are targets to explore
+    while (Targets.Num() > 0)
+    {
+        // Get the hex with the lowest cost from the targets
+        float CurrentPriority = 0.0f;
 
-		// Find the neighbour Hex tiles based on the current, exclude Hex tiles we have already visited
-		const TArray<FIntVector> Neighbours = GetValidUnvisitedNeighbours(Current, VisitedHex);
-		AHexagon* CurrentHex = *HexCells.Find(Current);
+        // Ensure the priority queue is not empty before attempting to Peek or Pop
+        if (PriorityQueue.IsEmpty())break;
+        FIntVector Current = PriorityQueue.Peek(EPeekPosition::Head, CurrentPriority);
+        PriorityQueue.Pop(); // Remove the element after peeking
 
-		for (FIntVector Neighbour : Neighbours)
-		{
-			int NewCost = CostSoFar[Current] + CurrentHex->HexDataAsset->TravelCost;
+        // If the current hex is the goal, break the loop
+        if (Current == Goal) break;
 
-			// Only update cost if this is a new neighbor or the new cost is lower
-			if (!CostSoFar.Contains(Neighbour) || NewCost < CostSoFar[Neighbour])
-			{
-				// Update the cost so far for the neighbor
-				CostSoFar.Add(Neighbour, NewCost);  // or CostSoFar[Neighbour] = NewCost if it already exists
+        // Check if Current is in HexCells and is valid
+        AHexagon** CurrentHexPtr = HexCells.Find(Current);
+        if (!CurrentHexPtr || !*CurrentHexPtr)
+        {
+            // Skip this node if the corresponding AHexagon is not found or invalid
+            continue;
+        }
 
-				// Add the neighbor to the targets if not already added
-				if (!Targets.Contains(Neighbour))
-				{
-					Targets.Add(Neighbour);
-				}
+        const AHexagon* CurrentHex = *CurrentHexPtr;
 
-				// Record the path: Neighbour came from Current
-				PathToTake.Add(Neighbour, Current);
-			}
-		}
+        // Find the neighbour Hex tiles based on the current, exclude Hex tiles we have already visited
+        const TArray<FIntVector> Neighbours = GetValidUnvisitedNeighbours(Current, VisitedHex);
 
-		VisitedHex.Add(Current);
-	}
+    	for (FIntVector Neighbour : Neighbours)
+        {
+            float OldCost;
+            bool bNeighbourInQueue = PriorityQueue.Find(Neighbour, OldCost);
 
-	PathFound =  PathToTake.Contains(Goal);
-	return PathToTake;
+            // Calculate the new cost to reach the neighbour
+            int NewCost = static_cast<int>(CurrentPriority) + CurrentHex->HexDataAsset->TravelCost;
+
+            // Only update cost if this is a new neighbor or the new cost is lower
+            if (!bNeighbourInQueue || NewCost < OldCost)
+            {
+                // Update the cost so far for the neighbor
+                PriorityQueue.Push(Neighbour, NewCost);
+
+                // Add the neighbor to the targets if not already added
+                if (!Targets.Contains(Neighbour))
+                {
+                    Targets.Add(Neighbour);
+                }
+                // Record the path: Neighbour came from Current
+                PathToTake.Add(Neighbour, Current);
+            }
+        }
+        // Mark the current hex as visited
+        VisitedHex.Add(Current);
+    }
+    // Check if the goal was found in the path
+    PathFound = PathToTake.Contains(Goal);
+    return PathToTake;
 }
+
+
+
 
 void AGridManager::DrawPath(const FIntVector StartPosition,const TMap<FIntVector, FIntVector> PathToTake)
 {
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_DRAW_PATH)
 	// Step 1: Reset all the hex tiles to normal state (excluding the goal)
 	SetAllHexState(EHexState::Normal);
 
@@ -290,36 +301,6 @@ void AGridManager::DrawPath(const FIntVector StartPosition,const TMap<FIntVector
 	{
 		(*GoalHex)->SetHexState(EHexState::Special);
 	}
-}
-
-
-FIntVector AGridManager::GetLowestCostHexCoordinates(const TArray<FIntVector>& Neighbours, const TMap<FIntVector, int>& CostSoFar,
-                                                     const TArray<FIntVector>& Visited)
-{
-	FIntVector LowestCostHex;
-	int MaxCost = INT_MAX;  // Start with the maximum possible cost
-
-	// Loop through all neighbors
-	for (FIntVector Neighbour : Neighbours)
-	{
-		// Check if the neighbor has already been visited
-		if (Visited.Contains(Neighbour))
-		{
-			continue;  // Skip this neighbor if it's already visited
-		}
-
-		// Find the cost of the neighbor in the CostSoFar map
-		const int* NeighbourCost = CostSoFar.Find(Neighbour);
-		if (NeighbourCost && *NeighbourCost < MaxCost)
-		{
-			// Update the lowest cost hex and max cost if this neighbor has a lower cost
-			MaxCost = *NeighbourCost;
-			LowestCostHex = Neighbour;
-		}
-	}
-
-	// Return the hex with the lowest cost
-	return LowestCostHex;
 }
 
 TArray<FIntVector> AGridManager::GetValidUnvisitedNeighbours(const FIntVector& Current,	const TArray<FIntVector>& VisitedHex)
@@ -416,24 +397,22 @@ void AGridManager::SetNeighbourHexHighlighted(const FIntVector& SelectedHex)
 
 void AGridManager::OnTileClicked(const FIntVector HexPosition)
 {
-	UE_LOG(LogTemp, Log, TEXT("Hex clicked at: %s"), *HexPosition.ToString());
-	bool PathFound;
+	//UE_LOG(LogTemp, Log, TEXT("Hex clicked at: %s"), *HexPosition.ToString());
 	
+	// Find the path, then draw the path we found.
+	bool PathFound;
 	const TMap<FIntVector,FIntVector> PathToTake = FindPath(HexPosition, PathFound);
-	if (PathFound)
-	{
-	DrawPath(HexPosition, PathToTake );
-	}
-	else
-	{
-		SetAllHexState(EHexState::Normal);
-	}
+	if (PathFound)	DrawPath(HexPosition, PathToTake );
+	else SetAllHexState(EHexState::Normal);
 }
 
 // Called when the game starts or when spawned
 void AGridManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	PriorityQueue = TPriorityQueue<FIntVector>(EPriorityOrder::Ascending);
+
 	GenerateMap();
 }
 

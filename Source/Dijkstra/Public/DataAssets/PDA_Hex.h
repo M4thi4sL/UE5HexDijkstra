@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PDA_Base.h"
-#include "EHexType.h"
+#include "Hexagon/EHexType.h"
 #include "PDA_Hex.generated.h"
 
 /**
