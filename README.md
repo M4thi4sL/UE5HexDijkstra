@@ -51,10 +51,11 @@ The C++ implementation is located in the `Source/Dijkstra` folder and includes t
 
 # Showcase
 
-![Dijkstra](https://github.com/user-attachments/assets/ff5e47fe-50e6-45f2-b740-4d7e56a8515c)
+![Hex01](https://github.com/user-attachments/assets/9e7feb5e-4993-4cf0-b2ab-a1439467dbfd)
 
-Debug view:
-![hex_debug](https://github.com/user-attachments/assets/cbe40fa7-acb9-4f6f-857e-8a1812d0201a)
+debug view:
+![Hex02](https://github.com/user-attachments/assets/e0bff4db-23af-4940-8b9f-ee1e10838753)
+
 
 # How to Build
 
@@ -66,9 +67,4 @@ Debug view:
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
 =======
-        
-![Hex01](https://github.com/user-attachments/assets/9e7feb5e-4993-4cf0-b2ab-a1439467dbfd)
-
-debug view:
-![Hex02](https://github.com/user-attachments/assets/e0bff4db-23af-4940-8b9f-ee1e10838753)
 
