@@ -60,8 +60,8 @@ debug view:
 # How to Build
 
 1. Open the project in Unreal Engine 5.
-2. If using the C++ implementation, ensure you have Visual Studio installed with the necessary components for Unreal Engine development.
-3. Build the project using the Unreal Engine Editor or Visual Studio.
+2. If using the C++ implementation, ensure you have Visual Studio / Jetbrains Rider installed with the necessary components for Unreal Engine development.
+3. Build the project using the Unreal Engine Editor or your IDE.
 
 # License
 
