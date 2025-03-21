@@ -46,29 +46,33 @@ void AHexagon::SetupHex()
 {
 	if (HexDataAsset)
 	{
-		// Get the array of soft references
-		TArray<TSoftObjectPtr<UObject>> SoftReferences = HexDataAsset->GetSoftReferences();
-		TArray<FSoftObjectPath> SoftObjectPaths;
+		UAssetManager& AssetManager = UAssetManager::Get();
 
-		// Convert the TSoftObjectPtr references to FSoftObjectPath
-		for (const TSoftObjectPtr<UObject>& SoftRef : SoftReferences)
-		{
-			// Consider adding references that are not currently valid but could be loaded
-			if (!SoftRef.IsNull()) 
-			{
-				SoftObjectPaths.Add(SoftRef.ToSoftObjectPath());
-			}
-		}
+		// Get the PrimaryAssetId from the HexDataAsset
+		FPrimaryAssetId AssetId = HexDataAsset->GetPrimaryAssetId();
 
-		// Now request the async load for all the soft object paths
-		if (SoftObjectPaths.Num() > 0)
+		if (AssetId.IsValid())
 		{
-			TSharedPtr<FStreamableHandle> Handle = UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftObjectPaths, FStreamableDelegate::CreateLambda([this]()
+			// Specify the bundle to load
+			const TArray<FName> BundlesToLoad = { FName("Game") };
+
+			// Delegate to handle what happens once the assets are loaded
+			const FStreamableDelegate OnLoadedDelegate = FStreamableDelegate::CreateLambda([this]()
 			{
-				// Set static mesh and material (assuming they're now available)
-				if (HexDataAsset->Mesh.IsValid()) StaticMeshComponent->SetStaticMesh(HexDataAsset->Mesh.Get());
-				if (HexDataAsset->BaseMaterial.IsValid())  StaticMeshComponent->SetMaterial(0, HexDataAsset->BaseMaterial.Get());
-			}));
+				// Make sure the assets are now loaded before accessing them
+				if (HexDataAsset->Mesh.IsValid())
+				{
+					StaticMeshComponent->SetStaticMesh(HexDataAsset->Mesh.Get());
+				}
+
+				if (HexDataAsset->BaseMaterial.IsValid())
+				{
+					StaticMeshComponent->SetMaterial(0, HexDataAsset->BaseMaterial.Get());
+				}
+			});
+
+			// Request async load by PrimaryAssetId
+			AssetManager.LoadPrimaryAsset(AssetId, BundlesToLoad, OnLoadedDelegate);
 		}
 	}
 }
@@ -84,7 +88,6 @@ void AHexagon::OnMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonP
 	default:
 		break;
 	}
-	
 }
 
 void AHexagon::OnMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent)

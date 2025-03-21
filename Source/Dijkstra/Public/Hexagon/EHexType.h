@@ -11,6 +11,6 @@
 UENUM(BlueprintType) 
 enum class EHexType  : uint8
 {
-	Walkable UMETA(DisplayName = "Walk"),
-	Blockable UMETA(DisplayName = "Block")
+	Walkable UMETA(DisplayName = "Walkable"),
+	Blockable UMETA(DisplayName = "Blocking")
 };
