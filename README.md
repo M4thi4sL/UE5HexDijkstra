@@ -2,15 +2,7 @@
 
 This project is a complete refactor of the [original DijkstraBlueprint repository](https://github.com/salvatorespoto/DijkstraBlueprint), updated to follow industry-standard coding practices and optimization. It implements a hexagonal grid system with Dijkstra's algorithm for pathfinding, supporting both Blueprint and C++ workflows.
 
-# Branches
-
-✅ [Dijkstra_blueprint](https://github.com/M4thi4sL/UE5HexDijkstra/tree/Dijkstra_Blueprint) contains the latest version of the blueprint-only implementation.
-
-🚧 [Dijkstra_C++](https://github.com/M4thi4sL/UE5HexDijkstra/tree/Dijkstra_C%2B%2B) contains the latest version of the C++ / Blueprint hybrid implementation.
-
-You can also find a zipped-up version of either project in the release section.
-
-🚧 TODO: Add speed comparison between Blueprint and C++ implementations.
+Dijkstra_C++
 
 # Features
 
@@ -73,3 +65,10 @@ Debug view:
 # License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
+=======
+        
+![Hex01](https://github.com/user-attachments/assets/9e7feb5e-4993-4cf0-b2ab-a1439467dbfd)
+
+debug view:
+![Hex02](https://github.com/user-attachments/assets/e0bff4db-23af-4940-8b9f-ee1e10838753)
+
