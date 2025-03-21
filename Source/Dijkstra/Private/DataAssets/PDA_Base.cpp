@@ -3,7 +3,7 @@
 
 #include "DataAssets/PDA_Base.h"
 
-TArray<TSoftObjectPtr<UObject>> UPDA_Base::GetSoftReferences()
+FPrimaryAssetId UPDA_Base::GetPrimaryAssetId() const
 {
-	return TArray<TSoftObjectPtr<UObject>>();
+	return FPrimaryAssetId("Base", GetFName());
 }

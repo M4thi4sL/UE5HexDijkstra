@@ -15,6 +15,8 @@ class DIJKSTRA_API UPDA_Base : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Setup")
-	virtual TArray<TSoftObjectPtr<UObject>> GetSoftReferences();
+
+
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
+	
 };
